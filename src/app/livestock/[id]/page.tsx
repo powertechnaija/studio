@@ -1,23 +1,30 @@
 
 "use client";
 
-import { useParams, useRouter }
-from 'next/navigation';
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, CalendarDays, ListChecks, Syringe, Utensils, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Edit, CalendarDays, ListChecks, Syringe, Utensils, MessageSquare, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format } from 'date-fns';
+import { AddActivityLogForm } from '@/components/livestock/AddActivityLogForm';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function LivestockDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getLivestockById, getPenById } = useData();
+  const { getLivestockById, getPenById, addActivityLog: contextAddActivityLog } = useData(); // Renamed to avoid conflict
+  const { toast } = useToast();
   const id = typeof params.id === 'string' ? params.id : '';
   const animal = getLivestockById(id);
+
+  const [isAddLogDialogOpen, setIsAddLogDialogOpen] = useState(false);
 
   if (!animal) {
     return (
@@ -35,9 +42,14 @@ export default function LivestockDetailPage() {
   const activityIcons = {
     Feeding: Utensils,
     Medication: Syringe,
-    Vaccination: Syringe, // Could use a different icon if available, e.g. ShieldCheck
+    Vaccination: Syringe,
     Observation: MessageSquare,
     Other: ListChecks,
+  };
+
+  const handleLogAdded = () => {
+    setIsAddLogDialogOpen(false);
+    // Data context already updated the livestock state, so the list will re-render.
   };
 
   return (
@@ -93,12 +105,34 @@ export default function LivestockDetailPage() {
         </TabsList>
         <TabsContent value="activity">
           <Card>
-            <CardHeader>
-              <CardTitle>Activity Logs</CardTitle>
-              <CardDescription>Chronological record of activities related to this animal.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Activity Logs</CardTitle>
+                <CardDescription>Chronological record of activities related to this animal.</CardDescription>
+              </div>
+              <Dialog open={isAddLogDialogOpen} onOpenChange={setIsAddLogDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Log
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[480px]">
+                  <DialogHeader>
+                    <DialogTitle>Add New Activity Log for {animal.animalId}</DialogTitle>
+                    <DialogDescription>
+                      Record a new activity for this animal. Click save when you're done.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AddActivityLogForm
+                    animalId={animal.id}
+                    onLogAdded={handleLogAdded}
+                    onCancel={() => setIsAddLogDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent className="space-y-4">
-              {animal.activityLogs.length > 0 ? (
+              {animal.activityLogs && animal.activityLogs.length > 0 ? (
                 animal.activityLogs.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(log => {
                   const Icon = activityIcons[log.type] || ListChecks;
                   return (
@@ -124,7 +158,7 @@ export default function LivestockDetailPage() {
               <CardDescription>Key dates and milestones for this animal.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {animal.importantDates.length > 0 ? (
+              {animal.importantDates && animal.importantDates.length > 0 ? (
                  animal.importantDates.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(date => (
                     <div key={date.id} className="flex items-start gap-4 p-3 border rounded-lg hover:bg-muted/50">
                       <CalendarDays className="h-5 w-5 mt-1 text-primary flex-shrink-0" />
