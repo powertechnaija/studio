@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
-import type { Livestock, Pen, ActivityLog, ImportantDate } from '@/lib/types';
+import type { Livestock, Pen, ActivityLog, ImportantDate, LivestockType } from '@/lib/types';
 
 interface DataContextType {
   livestock: Livestock[];
@@ -33,10 +33,11 @@ const initialLivestockData: Livestock[] = [
     breed: 'Holstein',
     birthDate: new Date(2022, 5, 15).toISOString(),
     gender: 'Female',
+    livestockType: 'Mega Stock',
     penId: 'pen1',
     healthRecords: 'Generally healthy. Vaccinated for BVD.',
     imageUrl: 'https://placehold.co/100x100.png',
-    dataAiHint: 'cow farm',
+    dataAiHint: 'cattle farm',
     activityLogs: [
       { id: 'act1', date: new Date(2023, 10, 1).toISOString(), type: 'Vaccination', description: 'Annual booster shots.' },
       { id: 'act2', date: new Date(2023, 11, 5).toISOString(), type: 'Feeding', description: 'Standard feed mix.' },
@@ -51,10 +52,11 @@ const initialLivestockData: Livestock[] = [
     breed: 'Merino',
     birthDate: new Date(2023, 1, 20).toISOString(),
     gender: 'Male',
+    livestockType: 'Mid Stock',
     penId: 'pen2',
     healthRecords: 'Dewormed on schedule.',
     imageUrl: 'https://placehold.co/100x100.png',
-    dataAiHint: 'sheep field',
+    dataAiHint: 'sheep flock',
     activityLogs: [
        { id: 'act3', date: new Date(2023, 9, 15).toISOString(), type: 'Medication', description: 'Deworming.' },
     ],

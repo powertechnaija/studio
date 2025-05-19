@@ -13,17 +13,23 @@ export interface ImportantDate {
   notes?: string;
 }
 
+export type LivestockType = 'Mega Stock' | 'Mid Stock' | 'Mini Stock' | 'Micro Stock';
+
+export const livestockTypes: LivestockType[] = ['Mega Stock', 'Mid Stock', 'Mini Stock', 'Micro Stock'];
+
 export interface Livestock {
   id: string;
   animalId: string; // User-defined ID or tag number
   breed: string;
   birthDate: string; // ISO string
   gender: 'Male' | 'Female' | 'Unknown';
+  livestockType: LivestockType;
   penId?: string; // ID of the pen it belongs to
   healthRecords: string; // General health notes, could be more structured
   activityLogs: ActivityLog[];
   importantDates: ImportantDate[];
-  imageUrl?: string; 
+  imageUrl?: string;
+  dataAiHint?: string;
 }
 
 export interface Pen {

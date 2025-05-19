@@ -1,7 +1,7 @@
 
 "use client";
 
-import { z } from 'zod'; // Added this line
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { Livestock, Pen, ActivityLog, ImportantDate } from '@/lib/types';
+import type { Livestock, Pen, ActivityLog, ImportantDate, LivestockType } from '@/lib/types';
+import { livestockTypes } from '@/lib/types';
 
 const activityLogSchema = z.object({
   date: z.date({ required_error: "Date is required." }),
@@ -33,6 +34,7 @@ const livestockFormSchema = z.object({
   breed: z.string().min(1, 'Breed is required'),
   birthDate: z.date({ required_error: "Birth date is required."}),
   gender: z.enum(['Male', 'Female', 'Unknown']),
+  livestockType: z.enum(livestockTypes as [LivestockType, ...LivestockType[]], { required_error: "Livestock type is required."}),
   penId: z.string().optional(),
   healthRecords: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
@@ -58,10 +60,11 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
       breed: initialData?.breed || '',
       birthDate: initialData?.birthDate ? new Date(initialData.birthDate) : undefined,
       gender: initialData?.gender || 'Unknown',
+      livestockType: initialData?.livestockType || undefined,
       penId: initialData?.penId || '',
       healthRecords: initialData?.healthRecords || '',
       imageUrl: initialData?.imageUrl || '',
-      dataAiHint: (initialData as any)?.dataAiHint || '', // Temp fix if type doesn't have it
+      dataAiHint: initialData?.dataAiHint || '',
       activityLogs: initialData?.activityLogs?.map(log => ({...log, date: new Date(log.date)})) || [],
       importantDates: initialData?.importantDates?.map(date => ({...date, date: new Date(date.date)})) || [],
     },
@@ -84,7 +87,7 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FormField
             control={form.control}
             name="animalId"
@@ -145,6 +148,22 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Female">Female</SelectItem>
                     <SelectItem value="Unknown">Unknown</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="livestockType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Livestock Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Select livestock type" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    {livestockTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <FormMessage />

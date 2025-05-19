@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, CalendarDays, ListChecks, Syringe, Utensils, MessageSquare, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Edit, CalendarDays, ListChecks, Syringe, Utensils, MessageSquare, PlusCircle, Tag } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function LivestockDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getLivestockById, getPenById, addActivityLog: contextAddActivityLog } = useData(); // Renamed to avoid conflict
+  const { getLivestockById, getPenById, addActivityLog: contextAddActivityLog } = useData(); 
   const { toast } = useToast();
   const id = typeof params.id === 'string' ? params.id : '';
   const animal = getLivestockById(id);
@@ -62,7 +62,9 @@ export default function LivestockDetailPage() {
         <CardHeader className="flex flex-row items-start justify-between">
           <div>
             <CardTitle className="text-3xl">{animal.animalId}</CardTitle>
-            <CardDescription className="text-lg">{animal.breed} - {animal.gender}</CardDescription>
+            <CardDescription className="text-lg">
+              {animal.livestockType} - {animal.breed} - {animal.gender}
+            </CardDescription>
           </div>
           {/* <Button asChild variant="outline">
             <Link href={`/livestock/${animal.id}/edit`}> // Edit page not implemented in this scaffold
@@ -82,7 +84,9 @@ export default function LivestockDetailPage() {
                 data-ai-hint={animal.dataAiHint || "livestock animal"}
               />
             ) : (
-              <div className="w-full h-[300px] bg-muted rounded-lg flex items-center justify-center text-muted-foreground shadow-md">No Image Available</div>
+              <div className="w-full h-[300px] bg-muted rounded-lg flex items-center justify-center text-muted-foreground shadow-md" data-ai-hint={animal.dataAiHint || "livestock silhouette"}>
+                 <Tag className="h-24 w-24 text-muted-foreground/50" />
+              </div>
             )}
           </div>
           <div className="md:col-span-2 space-y-4">

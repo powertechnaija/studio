@@ -27,6 +27,7 @@ export function LivestockTable({ livestock, pens, onDelete }: LivestockTableProp
         <TableRow>
           <TableHead className="w-[80px]">Image</TableHead>
           <TableHead>Animal ID</TableHead>
+          <TableHead>Type</TableHead>
           <TableHead>Breed</TableHead>
           <TableHead>Birth Date</TableHead>
           <TableHead>Pen</TableHead>
@@ -51,6 +52,7 @@ export function LivestockTable({ livestock, pens, onDelete }: LivestockTableProp
               )}
             </TableCell>
             <TableCell className="font-medium">{animal.animalId}</TableCell>
+            <TableCell>{animal.livestockType}</TableCell>
             <TableCell>{animal.breed}</TableCell>
             <TableCell>{new Date(animal.birthDate).toLocaleDateString()}</TableCell>
             <TableCell>{getPenName(animal.penId)}</TableCell>
@@ -77,7 +79,7 @@ export function LivestockTable({ livestock, pens, onDelete }: LivestockTableProp
           </TableRow>
         )) : (
           <TableRow>
-            <TableCell colSpan={6} className="text-center h-24">
+            <TableCell colSpan={7} className="text-center h-24">
               No livestock found.
             </TableCell>
           </TableRow>

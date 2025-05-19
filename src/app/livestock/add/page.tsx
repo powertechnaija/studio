@@ -13,45 +13,36 @@ export default function AddLivestockPage() {
   const { toast } = useToast();
 
   const handleSubmit = (data: LivestockFormData) => {
-    const newAnimal = {
-      ...data,
-      birthDate: data.birthDate.toISOString(),
-      activityLogs: data.activityLogs?.map(log => ({...log, id: `act${Date.now()}-${Math.random()}`, date: log.date.toISOString()})) || [],
-      importantDates: data.importantDates?.map(impDate => ({...impDate, id: `impD${Date.now()}-${Math.random()}`, date: impDate.date.toISOString()})) || [],
-    };
-    
-    // The contextAddLivestock expects Omit<Livestock, 'id' | 'activityLogs' | 'importantDates'>
-    // So we need to adapt. For simplicity, I'll modify the context or create a new function there.
-    // For now, let's cast, assuming contextAddLivestock creates an ID and empty logs/dates.
-    // This is a simplification.
-    
     const animalToAdd = {
       animalId: data.animalId,
       breed: data.breed,
       birthDate: data.birthDate.toISOString(),
       gender: data.gender,
+      livestockType: data.livestockType,
       penId: data.penId,
       healthRecords: data.healthRecords || '',
       imageUrl: data.imageUrl,
       dataAiHint: data.dataAiHint,
+      // activityLogs and importantDates will be initialized as empty arrays by contextAddLivestock
+      // and can be added/managed via the detail page or an edit flow.
     };
     
     contextAddLivestock(animalToAdd);
 
-    // Manually update the newly added livestock with logs and dates - this is a workaround for current contextAddLivestock signature
-    // A better approach would be to adjust contextAddLivestock to accept the full initial object or have separate update.
-    // For now, we'll assume this is handled or simplify. The form collects it, but the context might not store it all directly from add.
-    // Let's assume contextAddLivestock has been updated to handle this, or we use updateLivestock.
-    // For the sake of this scaffold:
-    // contextAddLivestock(newAnimal); // This line would be ideal if contextAddLivestock took the full newAnimal.
-    // Since it doesn't, we'll use the simpler version and logs/dates would be added via an edit flow.
-    // For now, the form collects it but won't be persisted by the current `addLivestock` in context for logs/dates.
-    // Let's proceed with the simpler contextAddLivestock that was defined earlier.
-
+    // If you want to add activityLogs and importantDates directly during creation,
+    // you would need to modify contextAddLivestock or use updateLivestock immediately after.
+    // For this example, we're keeping contextAddLivestock simpler.
+    // const newAnimalWithDetails = {
+    //   ...animalToAdd,
+    //   // id would be assigned by contextAddLivestock, so this part needs careful handling
+    //   activityLogs: data.activityLogs?.map(log => ({...log, id: `act${Date.now()}-${Math.random()}`, date: log.date.toISOString()})) || [],
+    //   importantDates: data.importantDates?.map(impDate => ({...impDate, id: `impD${Date.now()}-${Math.random()}`, date: impDate.date.toISOString()})) || [],
+    // };
+    // updateLivestock(newAnimalWithDetails); // This would require getting the ID first.
 
     toast({
       title: "Livestock Added",
-      description: `${data.animalId} has been successfully registered.`,
+      description: `${data.animalId} (${data.livestockType}) has been successfully registered.`,
     });
     router.push('/livestock');
   };
