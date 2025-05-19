@@ -111,13 +111,16 @@ const initialLivestockData: Livestock[] = [
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [livestock, setLivestock] = useState<Livestock[]>(initialLivestockData);
   const [pens, setPens] = useState<Pen[]>(initialPensData);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false); // Tracks if localStorage has been checked
 
   useEffect(() => {
+    // This effect runs once on the client after initial mount
     const savedLivestock = localStorage.getItem('stockwiseLivestock');
     if (savedLivestock) {
       setLivestock(JSON.parse(savedLivestock));
     } else {
+      // If localStorage is empty, state is already initialLivestockData.
+      // Persist initialLivestockData to localStorage.
       localStorage.setItem('stockwiseLivestock', JSON.stringify(initialLivestockData));
     }
 
@@ -125,50 +128,56 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (savedPens) {
       setPens(JSON.parse(savedPens));
     } else {
+      // If localStorage is empty, state is already initialPensData.
+      // Persist initialPensData to localStorage.
       localStorage.setItem('stockwisePens', JSON.stringify(initialPensData));
     }
-    setIsLoaded(true);
+    setIsLoaded(true); // Mark that localStorage has been processed
   }, []);
 
   useEffect(() => {
+    // Persist livestock changes to localStorage once loaded
     if (isLoaded) {
       localStorage.setItem('stockwiseLivestock', JSON.stringify(livestock));
     }
   }, [livestock, isLoaded]);
 
   useEffect(() => {
+    // Persist pens changes to localStorage once loaded
     if (isLoaded) {
      localStorage.setItem('stockwisePens', JSON.stringify(pens));
     }
   }, [pens, isLoaded]);
 
   const addLivestock = useCallback((animalData: Omit<IndividualLivestock, 'id' | 'activityLogs' | 'importantDates'> | Omit<BatchLivestock, 'id' | 'activityLogs' | 'importantDates'>) => {
-    const newAnimal: Livestock = {
-      ...animalData,
-      id: `lvstk${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      activityLogs: [],
-      importantDates: [],
-    };
+    setLivestock(prevLivestock => {
+        const newAnimal: Livestock = {
+          ...animalData,
+          id: `lvstk${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          activityLogs: [],
+          importantDates: [],
+        };
+        const updatedLivestock = [...prevLivestock, newAnimal];
 
-    setLivestock(prev => [...prev, newAnimal]);
-
-    // If animal is assigned to a pen, and that pen doesn't have an allowedLivestockType yet,
-    // set the pen's type to this animal's type.
-    if (newAnimal.penId) {
-      const penToUpdate = pens.find(p => p.id === newAnimal.penId);
-      if (penToUpdate && (penToUpdate.allowedLivestockType === null || penToUpdate.allowedLivestockType === undefined)) {
-        // Check if other animals are in the pen
-        const animalsInPen = livestock.filter(l => l.penId === newAnimal.penId && l.id !== newAnimal.id);
-        if (animalsInPen.length === 0) { // Only set if this is the first animal or others are of same type
-             updatePen({...penToUpdate, allowedLivestockType: newAnimal.livestockType});
-        } else if (animalsInPen.every(a => a.livestockType === newAnimal.livestockType)) {
-             updatePen({...penToUpdate, allowedLivestockType: newAnimal.livestockType});
+        // Pen update logic needs to access the latest pens state.
+        // It's better to handle this after livestock state is confirmed.
+        // For now, assuming pens state is up-to-date or will be handled by a separate effect/call.
+        if (newAnimal.penId) {
+            setPens(currentPens => {
+                const penToUpdate = currentPens.find(p => p.id === newAnimal.penId);
+                if (penToUpdate && (penToUpdate.allowedLivestockType === null || penToUpdate.allowedLivestockType === undefined)) {
+                    const animalsInThisPen = updatedLivestock.filter(l => l.penId === newAnimal.penId && l.id !== newAnimal.id);
+                    if (animalsInThisPen.length === 0 || animalsInThisPen.every(a => a.livestockType === newAnimal.livestockType)) {
+                        return currentPens.map(p => p.id === newAnimal.penId ? {...p, allowedLivestockType: newAnimal.livestockType} : p);
+                    }
+                }
+                return currentPens; // No change to pens
+            });
         }
-        // If animalsInPen has different types, this indicates a data issue or a scenario not covered.
-        // For now, we assume the form's pen filtering prevents this.
-      }
-    }
-  }, [pens, livestock]); // Added livestock to dependencies
+        return updatedLivestock;
+    });
+  }, []); // Removed pens and livestock from dependency array as setPens now uses functional update
+
 
   const updateLivestock = (updatedAnimal: Livestock) => {
     setLivestock(prev => prev.map(animal => animal.id === updatedAnimal.id ? updatedAnimal : animal));
@@ -265,3 +274,4 @@ export const useData = () => {
   }
   return context;
 };
+
