@@ -1,15 +1,22 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Home, ListChecks, CalendarClock } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
 
 export default function DashboardPage() {
   const { livestock, pens, getPenById } = useData();
+  const [clientLoaded, setClientLoaded] = useState(false);
+
+  useEffect(() => {
+    setClientLoaded(true);
+  }, []);
 
   const totalLivestock = livestock.length;
 
@@ -55,8 +62,17 @@ export default function DashboardPage() {
             <CalendarClock className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{upcomingImportantDates.length}</div>
-            <p className="text-xs text-muted-foreground">important dates in near future</p>
+            {clientLoaded ? (
+              <>
+                <div className="text-2xl font-bold">{upcomingImportantDates.length}</div>
+                <p className="text-xs text-muted-foreground">important dates in near future</p>
+              </>
+            ) : (
+              <>
+                <Skeleton className="h-7 w-10 mb-1" />
+                <Skeleton className="h-3 w-32" />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -89,7 +105,16 @@ export default function DashboardPage() {
             <CardDescription>Next 5 critical dates for your livestock.</CardDescription>
           </CardHeader>
           <CardContent>
-            {upcomingImportantDates.length > 0 ? (
+            {!clientLoaded ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="space-y-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : upcomingImportantDates.length > 0 ? (
               <ul className="space-y-2">
                 {upcomingImportantDates.map(date => (
                   <li key={date.id} className="flex flex-col p-2 rounded-md hover:bg-muted">
@@ -125,8 +150,9 @@ export default function DashboardPage() {
                                      <Image 
                                         src={animal.imageUrl} 
                                         alt={animal.animalId} 
-                                        layout="fill"
-                                        objectFit="cover"
+                                        fill // Changed from layout="fill" objectFit="cover"
+                                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                        style={{objectFit: "cover"}}
                                         data-ai-hint={animal.dataAiHint || "livestock animal"}
                                      />
                                   </div>
