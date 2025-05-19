@@ -111,16 +111,13 @@ const initialLivestockData: Livestock[] = [
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [livestock, setLivestock] = useState<Livestock[]>(initialLivestockData);
   const [pens, setPens] = useState<Pen[]>(initialPensData);
-  const [isLoaded, setIsLoaded] = useState(false); // Tracks if localStorage has been checked
+  const [isLoaded, setIsLoaded] = useState(false); 
 
   useEffect(() => {
-    // This effect runs once on the client after initial mount
     const savedLivestock = localStorage.getItem('stockwiseLivestock');
     if (savedLivestock) {
       setLivestock(JSON.parse(savedLivestock));
     } else {
-      // If localStorage is empty, state is already initialLivestockData.
-      // Persist initialLivestockData to localStorage.
       localStorage.setItem('stockwiseLivestock', JSON.stringify(initialLivestockData));
     }
 
@@ -128,22 +125,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (savedPens) {
       setPens(JSON.parse(savedPens));
     } else {
-      // If localStorage is empty, state is already initialPensData.
-      // Persist initialPensData to localStorage.
       localStorage.setItem('stockwisePens', JSON.stringify(initialPensData));
     }
-    setIsLoaded(true); // Mark that localStorage has been processed
+    setIsLoaded(true); 
   }, []);
 
   useEffect(() => {
-    // Persist livestock changes to localStorage once loaded
     if (isLoaded) {
       localStorage.setItem('stockwiseLivestock', JSON.stringify(livestock));
     }
   }, [livestock, isLoaded]);
 
   useEffect(() => {
-    // Persist pens changes to localStorage once loaded
     if (isLoaded) {
      localStorage.setItem('stockwisePens', JSON.stringify(pens));
     }
@@ -159,9 +152,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         };
         const updatedLivestock = [...prevLivestock, newAnimal];
 
-        // Pen update logic needs to access the latest pens state.
-        // It's better to handle this after livestock state is confirmed.
-        // For now, assuming pens state is up-to-date or will be handled by a separate effect/call.
         if (newAnimal.penId) {
             setPens(currentPens => {
                 const penToUpdate = currentPens.find(p => p.id === newAnimal.penId);
@@ -171,12 +161,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                         return currentPens.map(p => p.id === newAnimal.penId ? {...p, allowedLivestockType: newAnimal.livestockType} : p);
                     }
                 }
-                return currentPens; // No change to pens
+                return currentPens; 
             });
         }
         return updatedLivestock;
     });
-  }, []); // Removed pens and livestock from dependency array as setPens now uses functional update
+  }, [setLivestock, setPens]); 
 
 
   const updateLivestock = (updatedAnimal: Livestock) => {
@@ -203,7 +193,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }, [livestock]);
 
 
-  const addActivityLog = (livestockId: string, log: Omit<ActivityLog, 'id'>) => {
+  const addActivityLog = useCallback((livestockId: string, log: Omit<ActivityLog, 'id'>) => {
     setLivestock(prev => prev.map(animal => {
       if (animal.id === livestockId) {
         return {
@@ -213,9 +203,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
       return animal;
     }));
-  };
+  }, [setLivestock]);
 
-  const addImportantDate = (livestockId: string, dateEntry: Omit<ImportantDate, 'id'>) => {
+  const addImportantDate = useCallback((livestockId: string, dateEntry: Omit<ImportantDate, 'id'>) => {
      setLivestock(prev => prev.map(animal => {
       if (animal.id === livestockId) {
         return {
@@ -225,9 +215,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       }
       return animal;
     }));
-  };
+  }, [setLivestock]);
 
-  const addBulkActivityLogToPen = (penId: string, logEntry: Omit<ActivityLog, 'id'>) => {
+  const addBulkActivityLogToPen = useCallback((penId: string, logEntry: Omit<ActivityLog, 'id'>) => {
     setLivestock(prevLivestock => {
       return prevLivestock.map(animal => {
         if (animal.penId === penId) {
@@ -244,7 +234,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         return animal;
       });
     });
-  };
+  }, [setLivestock]);
 
   return (
     <DataContext.Provider value={{ 
