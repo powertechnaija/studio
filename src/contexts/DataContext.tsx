@@ -16,6 +16,7 @@ interface DataContextType {
   getPenById: (id: string) => Pen | undefined;
   addActivityLog: (livestockId: string, log: Omit<ActivityLog, 'id'>) => void;
   addImportantDate: (livestockId: string, date: Omit<ImportantDate, 'id'>) => void;
+  addBulkActivityLogToPen: (penId: string, logEntry: Omit<ActivityLog, 'id'>) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -125,7 +126,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       if (animal.id === livestockId) {
         return {
           ...animal,
-          activityLogs: [...animal.activityLogs, { ...log, id: `act${Date.now()}` }]
+          activityLogs: [...animal.activityLogs, { ...log, id: `act${Date.now()}-${Math.random().toString(36).substring(2,9)}` }]
         };
       }
       return animal;
@@ -137,11 +138,30 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       if (animal.id === livestockId) {
         return {
           ...animal,
-          importantDates: [...animal.importantDates, { ...dateEntry, id: `impD${Date.now()}` }]
+          importantDates: [...animal.importantDates, { ...dateEntry, id: `impD${Date.now()}-${Math.random().toString(36).substring(2,9)}` }]
         };
       }
       return animal;
     }));
+  };
+
+  const addBulkActivityLogToPen = (penId: string, logEntry: Omit<ActivityLog, 'id'>) => {
+    setLivestock(prevLivestock => {
+      return prevLivestock.map(animal => {
+        if (animal.penId === penId) {
+          const newLog: ActivityLog = {
+            ...logEntry,
+            id: `act${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            date: new Date(logEntry.date).toISOString(),
+          };
+          return {
+            ...animal,
+            activityLogs: [...animal.activityLogs, newLog].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+          };
+        }
+        return animal;
+      });
+    });
   };
 
   return (
@@ -155,7 +175,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         getPens, 
         getPenById,
         addActivityLog,
-        addImportantDate
+        addImportantDate,
+        addBulkActivityLogToPen
     }}>
       {children}
     </DataContext.Provider>
@@ -169,4 +190,3 @@ export const useData = () => {
   }
   return context;
 };
-
