@@ -10,7 +10,8 @@ import {
   Bot, 
   Settings, 
   Home,
-  PanelLeft
+  PanelLeft,
+  Warehouse // Added icon for Pens
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,6 +22,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/livestock', label: 'Livestock', icon: List },
+  { href: '/pens', label: 'Pens', icon: Warehouse }, // Added Pens navigation item
   { href: '/ai-insights', label: 'AI Insights', icon: Bot },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -34,7 +36,7 @@ const Logo = () => (
 
 const NavLink = ({ item, isMobile }: { item: typeof navItems[0], isMobile?: boolean }) => {
   const pathname = usePathname();
-  const isActive = pathname === item.href;
+  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)); // Make parent active for sub-routes
 
   const linkContent = (
     <>
