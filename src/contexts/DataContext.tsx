@@ -20,12 +20,12 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-const initialPens: Pen[] = [
+const initialPensData: Pen[] = [
   { id: 'pen1', name: 'Pen A', description: 'Main pasture' },
   { id: 'pen2', name: 'Pen B', description: 'Holding pen' },
 ];
 
-const initialLivestock: Livestock[] = [
+const initialLivestockData: Livestock[] = [
   {
     id: 'lvstk1',
     animalId: 'COW-001',
@@ -65,32 +65,43 @@ const initialLivestock: Livestock[] = [
 
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [livestock, setLivestock] = useState<Livestock[]>(() => {
-     if (typeof window !== 'undefined') {
-      const savedLivestock = localStorage.getItem('stockwiseLivestock');
-      return savedLivestock ? JSON.parse(savedLivestock) : initialLivestock;
-    }
-    return initialLivestock;
-  });
-  const [pens, setPens] = useState<Pen[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedPens = localStorage.getItem('stockwisePens');
-      return savedPens ? JSON.parse(savedPens) : initialPens;
-    }
-    return initialPens;
-  });
+  // Initialize with default data for server and client's first render.
+  const [livestock, setLivestock] = useState<Livestock[]>(initialLivestockData);
+  const [pens, setPens] = useState<Pen[]>(initialPensData);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load from localStorage only on the client, after mount.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const savedLivestock = localStorage.getItem('stockwiseLivestock');
+    if (savedLivestock) {
+      setLivestock(JSON.parse(savedLivestock));
+    } else {
+      // If nothing in localStorage, persist initial data
+      localStorage.setItem('stockwiseLivestock', JSON.stringify(initialLivestockData));
+    }
+
+    const savedPens = localStorage.getItem('stockwisePens');
+    if (savedPens) {
+      setPens(JSON.parse(savedPens));
+    } else {
+      // If nothing in localStorage, persist initial data
+      localStorage.setItem('stockwisePens', JSON.stringify(initialPensData));
+    }
+    setIsLoaded(true); // Indicate that data has been loaded/checked from localStorage
+  }, []);
+
+  // Save to localStorage whenever data changes, but only if it's already loaded (to avoid overwriting during initial hydration with default data)
+  useEffect(() => {
+    if (isLoaded) {
       localStorage.setItem('stockwiseLivestock', JSON.stringify(livestock));
     }
-  }, [livestock]);
+  }, [livestock, isLoaded]);
 
   useEffect(() => {
-     if (typeof window !== 'undefined') {
-      localStorage.setItem('stockwisePens', JSON.stringify(pens));
+    if (isLoaded) {
+     localStorage.setItem('stockwisePens', JSON.stringify(pens));
     }
-  }, [pens]);
+  }, [pens, isLoaded]);
 
   const addLivestock = (animal: Omit<Livestock, 'id' | 'activityLogs' | 'importantDates'>) => {
     setLivestock(prev => [...prev, { ...animal, id: `lvstk${Date.now()}`, activityLogs: [], importantDates: [] }]);
@@ -158,3 +169,4 @@ export const useData = () => {
   }
   return context;
 };
+
