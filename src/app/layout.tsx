@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'StockWise - Livestock Management',
-  description: 'Efficiently manage your livestock with StockWise.',
+  title: 'TharwaLiv - Livestock Management',
+  description: 'Efficiently manage your livestock with TharwaLiv.',
 };
 
 export default function RootLayout({
