@@ -6,43 +6,51 @@ import { useData } from '@/contexts/DataContext';
 import { LivestockForm, type LivestockFormData } from '@/components/livestock/LivestockForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import type { IndividualLivestock, BatchLivestock } from '@/lib/types';
+
 
 export default function AddLivestockPage() {
   const router = useRouter();
-  const { pens, addLivestock: contextAddLivestock } = useData();
+  const { pens: allPens, addLivestock: contextAddLivestock, updatePen } = useData(); // get all pens
   const { toast } = useToast();
 
   const handleSubmit = (data: LivestockFormData) => {
-    const animalToAdd = {
-      animalId: data.animalId,
-      breed: data.breed,
-      birthDate: data.birthDate.toISOString(),
-      gender: data.gender,
-      livestockType: data.livestockType,
-      penId: data.penId,
-      healthRecords: data.healthRecords || '',
-      imageUrl: data.imageUrl,
-      dataAiHint: data.dataAiHint,
-      // activityLogs and importantDates will be initialized as empty arrays by contextAddLivestock
-      // and can be added/managed via the detail page or an edit flow.
-    };
+    let animalToAdd: Omit<IndividualLivestock, 'id' | 'activityLogs' | 'importantDates'> | Omit<BatchLivestock, 'id' | 'activityLogs' | 'importantDates'>;
+
+    if (data.livestockType === 'Mega Stock' || data.livestockType === 'Mid Stock') {
+      animalToAdd = {
+        livestockType: data.livestockType,
+        animalId: data.animalId,
+        breed: data.breed,
+        birthDate: data.birthDate!.toISOString(), // Assert non-null as it's required by schema
+        gender: data.gender!, // Assert non-null
+        penId: data.penId,
+        healthRecords: data.healthRecords,
+        imageUrl: data.imageUrl,
+        dataAiHint: data.dataAiHint,
+      };
+    } else { // Mini Stock or Micro Stock
+      animalToAdd = {
+        livestockType: data.livestockType,
+        animalId: data.animalId, // Batch/Colony ID
+        breed: data.breed, // Type/Strain
+        quantity: data.quantity!, // Assert non-null
+        birthDate: data.birthDate ? data.birthDate.toISOString() : undefined, // Optional
+        penId: data.penId,
+        healthRecords: data.healthRecords,
+        imageUrl: data.imageUrl,
+        dataAiHint: data.dataAiHint,
+      };
+    }
     
     contextAddLivestock(animalToAdd);
-
-    // If you want to add activityLogs and importantDates directly during creation,
-    // you would need to modify contextAddLivestock or use updateLivestock immediately after.
-    // For this example, we're keeping contextAddLivestock simpler.
-    // const newAnimalWithDetails = {
-    //   ...animalToAdd,
-    //   // id would be assigned by contextAddLivestock, so this part needs careful handling
-    //   activityLogs: data.activityLogs?.map(log => ({...log, id: `act${Date.now()}-${Math.random()}`, date: log.date.toISOString()})) || [],
-    //   importantDates: data.importantDates?.map(impDate => ({...impDate, id: `impD${Date.now()}-${Math.random()}`, date: impDate.date.toISOString()})) || [],
-    // };
-    // updateLivestock(newAnimalWithDetails); // This would require getting the ID first.
+    
+    // Logic to update pen's allowedLivestockType if it was flexible and is now set by this animal
+    // This is now handled within contextAddLivestock for cleaner separation.
 
     toast({
       title: "Livestock Added",
-      description: `${data.animalId} (${data.livestockType}) has been successfully registered.`,
+      description: `${data.livestockType === 'Mega Stock' || data.livestockType === 'Mid Stock' ? data.animalId : data.animalId + ' (Batch)'} (${data.livestockType}) has been successfully registered.`,
     });
     router.push('/livestock');
   };
@@ -51,10 +59,10 @@ export default function AddLivestockPage() {
     <Card>
       <CardHeader>
         <CardTitle>Add New Livestock</CardTitle>
-        <CardDescription>Fill in the details for the new animal.</CardDescription>
+        <CardDescription>Fill in the details for the new animal or batch/colony.</CardDescription>
       </CardHeader>
       <CardContent>
-        <LivestockForm pens={pens} onSubmit={handleSubmit} />
+        <LivestockForm allPens={allPens} onSubmit={handleSubmit} />
       </CardContent>
     </Card>
   );
