@@ -30,11 +30,11 @@ const importantDateSchema = z.object({
 });
 
 const livestockFormSchema = z.object({
+  livestockType: z.enum(livestockTypes as [LivestockType, ...LivestockType[]], { required_error: "Livestock type is required."}),
   animalId: z.string().min(1, 'Animal ID is required'),
   breed: z.string().min(1, 'Breed is required'),
   birthDate: z.date({ required_error: "Birth date is required."}),
   gender: z.enum(['Male', 'Female', 'Unknown']),
-  livestockType: z.enum(livestockTypes as [LivestockType, ...LivestockType[]], { required_error: "Livestock type is required."}),
   penId: z.string().optional(),
   healthRecords: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
@@ -56,11 +56,11 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
   const form = useForm<LivestockFormData>({
     resolver: zodResolver(livestockFormSchema),
     defaultValues: {
+      livestockType: initialData?.livestockType || undefined,
       animalId: initialData?.animalId || '',
       breed: initialData?.breed || '',
       birthDate: initialData?.birthDate ? new Date(initialData.birthDate) : undefined,
       gender: initialData?.gender || 'Unknown',
-      livestockType: initialData?.livestockType || undefined,
       penId: initialData?.penId || '',
       healthRecords: initialData?.healthRecords || '',
       imageUrl: initialData?.imageUrl || '',
@@ -88,6 +88,26 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <FormField
+            control={form.control}
+            name="livestockType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Livestock Type</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger autoFocus={!initialData?.id}> {/* Only autofocus on add, not edit */}
+                      <SelectValue placeholder="Select livestock type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {livestockTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="animalId"
@@ -148,22 +168,6 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Female">Female</SelectItem>
                     <SelectItem value="Unknown">Unknown</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="livestockType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Livestock Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Select livestock type" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {livestockTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -287,3 +291,4 @@ export function LivestockForm({ pens, onSubmit, initialData, isLoading }: Livest
     </Form>
   );
 }
+
